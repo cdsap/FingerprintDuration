@@ -31,5 +31,5 @@ jobs:
         run: |
           ./gradlew install
           cd build/install/fingerprinting/bin
-          ./fingerprinting --api-key= ${{ secrets.GE_API_KEY }} --url= ${{ secrets.GE_URL }} --max-duration=1000 --max-builds=5000 --project=nowinandroid 
+          ./fingerprinting --max-duration=1000 --max-builds=5000 --project=nowinandroid --api-key=${{ secrets.GE_API_KEY }} --url=${{ secrets.GE_URL }}
 
