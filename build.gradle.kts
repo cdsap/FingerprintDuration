@@ -16,7 +16,7 @@ application {
 }
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    implementation("io.github.cdsap:geapi-data:0.1")
+    implementation("io.github.cdsap:geapi-data:0.1.1")
     implementation("com.jakewharton.picnic:picnic:0.6.0")
     implementation("com.github.ajalt.clikt:clikt:3.5.0")
     implementation("com.google.code.gson:gson:2.8.5")
