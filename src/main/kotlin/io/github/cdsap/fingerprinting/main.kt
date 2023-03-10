@@ -5,13 +5,11 @@ import io.github.cdsap.geapi.client.network.GEClient
 import io.github.cdsap.geapi.client.repository.impl.GradleRepositoryImpl
 
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.multiple
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
 import io.github.cdsap.fingerprinting.report.FingerPrintingReport
+import io.github.cdsap.geapi.client.network.ClientConf
 
 import kotlinx.coroutines.runBlocking
 
@@ -23,11 +21,14 @@ class Fingerprinting : CliktCommand() {
     private val apiKey: String by option().required()
     private val url by option().required()
     private val maxBuilds by option().int().default(1000)
-    private val project: String? by option().required()
+    private val project: String? by option()
     private val tags: List<String> by option().multiple(default = emptyList())
     private val concurrentCalls by option().int().default(150)
+    private val concurrentCallsCache by option().int().default(10)
     private val user: String? by option()
-    private val maxDuration by option().long().required()
+    private val duration by option().long().required()
+        .check("duration must greater than 10s (10000)") { it >= 10000 }
+
 
     override fun run() {
         val filter = Filter(
@@ -38,12 +39,32 @@ class Fingerprinting : CliktCommand() {
             initFilter = System.currentTimeMillis(),
             user = user,
             concurrentCalls = concurrentCalls,
-            maxDuration = maxDuration
+            maxDuration = duration,
+            concurrentCallsConservative = concurrentCallsCache
         )
-        val repository = GradleRepositoryImpl(GEClient(apiKey, url))
+        val repository = GradleRepositoryImpl(
+            GEClient(
+                apiKey, url, ClientConf(
+                    maxRetries = 300,
+                    exponentialBase = 1.0,
+                    exponentialMaxDelay = 5000
+                )
+            )
+        )
+
+
+        val cacheRepository = GradleRepositoryImpl(
+            GEClient(
+                apiKey, url, ClientConf(
+                    maxRetries = 100,
+                    exponentialBase = 1.0,
+                    exponentialMaxDelay = 10000
+                )
+            )
+        )
 
         runBlocking {
-            FingerPrintingReport(filter, repository).process()
+            FingerPrintingReport(filter, repository, cacheRepository).process()
         }
     }
 }

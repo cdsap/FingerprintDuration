@@ -16,9 +16,11 @@ import kotlin.time.toDuration
 class FingerprintingView(private val outcome: List<Build>) {
 
     fun print(filter: Filter) {
+        printSummary(filter)
+        generateExtendedReport(outcome, filter)
+    }
 
-
-
+    private fun printSummary(filter: Filter) {
         println(
             table {
                 cellStyle {
@@ -49,24 +51,18 @@ class FingerprintingView(private val outcome: List<Build>) {
                         }
                     }
                     outcome.forEach {
-                        val a = it.taskExecution.filter {
-                            it.avoidanceOutcome == "avoided_from_local_cache" || it.avoidanceOutcome == "avoided_from_remote_cache"
-                        }.sumOf { it.duration }
+
                         row {
                             cell("${filter.url}/s/${it.id}")
                             cell(it.projectName)
                             cell(SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(Date(it.buildStartTime)).toString())
-                            cell(a.toDuration(DurationUnit.MILLISECONDS)) {
+                            cell(duration(it).toDuration(DurationUnit.MILLISECONDS)) {
                                 alignment = TextAlignment.MiddleRight
                             }
                         }
                     }
-
-
                 }
             })
-        generateExtendedReport(outcome, filter)
-
     }
 
     private fun generateExtendedReport(outcome: List<Build>, filter: Filter) {
@@ -91,8 +87,6 @@ class FingerprintingView(private val outcome: List<Build>) {
                             alignment = TextAlignment.MiddleLeft
                         }
                     }
-
-
                 }
                 outcome.forEach {
                     val buildId = it.id
@@ -105,7 +99,7 @@ class FingerprintingView(private val outcome: List<Build>) {
                     }
                     row {
                         cell("Project")
-                        cell("${it.projectName}") {
+                        cell(it.projectName) {
                             columnSpan = 5
                         }
 
@@ -126,9 +120,7 @@ class FingerprintingView(private val outcome: List<Build>) {
                     }
                     row {
                         cell("Tags")
-                        cell(
-                            if (it.tags != null) it.tags.joinToString(",") else ""
-                        ) {
+                        cell(it.tags.joinToString(",")) {
                             columnSpan = 5
                         }
 
@@ -158,10 +150,50 @@ class FingerprintingView(private val outcome: List<Build>) {
                                     }
                                 }
                             }
+                    } else {
+                        row {
+                            cell("Goal mojos") {
+                                columnSpan = 6
+                            }
+                        }
+                        it.goalExecution.filter {
+                            it.avoidanceOutcome == "avoided_from_local_cache" || it.avoidanceOutcome == "avoided_from_remote_cache"
+                        }
+                            .forEach {
+                                val duration = it.fingerprintingDuration
+                                if (duration > filter.maxDuration) {
+                                    row {
+                                        cell("${it.goalExecutionId}\n${filter.url}/s/$buildId/timeline?outcome=from-cache&goal-execution=${it.goalExecutionId}") {
+                                            alignment = TextAlignment.MiddleLeft
+                                            columnSpan = 3
+                                        }
+                                        cell(duration.toDuration(DurationUnit.MILLISECONDS)) {
+                                            columnSpan = 3
+                                            alignment = TextAlignment.MiddleCenter
+                                        }
+                                    }
+                                }
+                            }
                     }
+
                 }
             }.renderText()
         )
-        println("For more information on the tasks/goals check extended_report.txt")
+        if (outcome.isNotEmpty()) {
+            println("For more information on the tasks/goals check extended_report.txt")
+        }
+    }
+
+    private fun duration(build: Build): Long {
+        return if (build.builtTool == "gradle") {
+            build.taskExecution.filter {
+                it.avoidanceOutcome == "avoided_from_local_cache" || it.avoidanceOutcome == "avoided_from_remote_cache"
+            }.sumOf { it.duration }
+        } else {
+            build.goalExecution.filter {
+                it.avoidanceOutcome == "avoided_from_local_cache" || it.avoidanceOutcome == "avoided_from_remote_cache"
+            }.sumOf { it.duration }
+        }
     }
 }
+
