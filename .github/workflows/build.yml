@@ -27,9 +27,14 @@ jobs:
           distribution: 'temurin'
           java-version:  ${{ matrix.java }}
 
-      - name: Check spotless
+      - name: Execute fingerprinting
         run: |
           ./gradlew install
           cd build/install/fingerprinting/bin
-          ./fingerprinting --duration=10000 --max-builds=5000 --project=nowinandroid --api-key=${{ secrets.GE_API_KEY }} --url=${{ secrets.GE_URL }}
+          ./fingerprinting --duration=10000 --max-builds=5000 --api-key=${{ secrets.GE_API_KEY }} --url=${{ secrets.GE_URL }}
 
+      - name: Execute fingerprinting with project
+        run: |
+            ./gradlew install
+            cd build/install/fingerprinting/bin
+            ./fingerprinting --duration=10000 --max-builds=10000 --project=nowinandroid --api-key=${{ secrets.GE_API_KEY }} --url=${{ secrets.GE_URL }}
