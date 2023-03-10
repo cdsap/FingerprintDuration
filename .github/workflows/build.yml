@@ -31,7 +31,7 @@ jobs:
         run: |
           ./gradlew install
           cd build/install/fingerprinting/bin
-          ./fingerprinting --duration=10000 --max-builds=5000 --api-key=${{ secrets.GE_API_KEY }} --url=${{ secrets.GE_URL }}
+          ./fingerprinting --duration=10000 --max-builds=1000 --api-key=${{ secrets.GE_API_KEY }} --url=${{ secrets.GE_URL }}
 
       - name: Execute fingerprinting with project
         run: |
