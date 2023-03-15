@@ -3,7 +3,7 @@ Fingerprinting tool uses Gradle Enterprise API generating a report of the builds
 fingerprinting duration higher than the value configured:
 
 ```
-./fingerprinting --api-key=$KEY --url=$URK --duration=10000 --max-builds=20000 --project=nowinandroid
+./fingerprinting --api-key=$KEY --url=$URL --duration=10000 --max-builds=20000 --project=nowinandroid
 ```
 
 #### Usage
